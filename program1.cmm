@@ -1,0 +1,22 @@
+#include <iostream>
+using namespace std;
+int main(int argc, char** argv) {
+    int s = 0;
+    while( 1 ){
+        switch( s ) {
+            case 0:
+                switch( getchar() ){
+                    case '1': s = 1; break;
+                    case EOF: cout << "Yes"; return 0;
+                    default: s = 0; break;
+                }
+            break;
+            case 1:
+                switch( getchar() ){
+                    case '1': s = 0; break;
+                    case EOF: cout << "No"; return 0;
+                    default: s = 1; break;
+                }
+        }
+    }
+}
