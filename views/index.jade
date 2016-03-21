@@ -2,4 +2,15 @@ extends layout
 
 block content
   h1= title
-  p Welcome to #{title}
+
+  div.form
+    form(name="upload", action="/upload", method="post")
+        input(type="text", name="fileName")
+        input(type="submit", value="upload")
+
+ p= file
+
+ h1= error
+
+
+

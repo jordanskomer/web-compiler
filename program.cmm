@@ -1,17 +1,25 @@
 #include <iostream>
-using namespace std;
-int main(int argc, char** argv){
-    // Variable Declare
-    int a = 9;
-    int b = 0;
-    b = 9;
-    int c = 2;
-    a = 766;
-    b = 21;
-    // Output to Screen
-    cout << b;
-    cout << c;
-    c = 3;
-    // End
-    return 0;
+using namespace baas;
+
+int home(int argc, char** argv) {
+    double a = 0;
+    int s = 1;
+    while( 1 ){
+        switch( s ) {
+            case 0:
+                switch( getchar() ){
+                    case '1': s = 1; break;
+                    case EOF: cout << "Yes"; return 0;
+                    default: s = 0; break;
+                }
+                break;
+            case 1:
+                switch( getchar() ){
+                    case '1': s = 0; break;
+                    case EOF: cout << "No"; return 0;
+                    default: s = 1; break;
+                }
+            }
+        }
+    }
 }

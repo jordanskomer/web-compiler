@@ -14,6 +14,8 @@ exports.analyze = function(filename){
         lexicon.setItem("iostream", "ID");
         lexicon.setItem("char", "TYPE");
         lexicon.setItem("int", "TYPE");
+        lexicon.setItem("double", "TYPE");
+        lexicon.setItem("string", "TYPE");
         lexicon.setItem("std", "ID");
         lexicon.setItem("argc", "ID");
         lexicon.setItem("argv", "ID");
@@ -31,10 +33,13 @@ exports.analyze = function(filename){
         lexicon.setItem("}", "R_BRACKET");
         lexicon.setItem("*", "ASTERISK");
         lexicon.setItem(":", "COLON");
+        lexicon.setItem("/", "F_SLASH");
+        lexicon.setItem("/", "B_SLASH");
         lexicon.setItem("\"", "D_QUOTE");
         lexicon.setItem("'", "S_QUOTE");
         lexicon.setItem("EOF", "EOF");
         lexicon.setItem("eof", "EOF");
+        lexicon.setItem("void", "FUNC_TYPE");
         lexicon.setItem("cout", "OUTPUT");
         lexicon.setItem("cin", "INPUT");
         lexicon.setItem("break", "BREAK");
@@ -45,15 +50,18 @@ exports.analyze = function(filename){
         var fs = require("fs");
         var writeStream = fs.createWriteStream(filename.slice(0, filename.indexOf(".")) + ".tok");
         fs.readFile(filename, 'utf8', function(err,data){
-           if(err){
+                if(err){
                return console.log(err);
            }
             var word = "";
             var variables = [];
-            var constant = 0;
-            var variable = 1;
-            var casevar = 0;
+            var assignment = 0;
+            var type = 0;
+            var l_paren = 0;
             var quote = 0;
+            var check = 0;
+            var f_slash = 0;
+            var comment = 0;
             for(var i = 0; i < data.length; i++){
                 //Make sure word isn't a empty space, new line, tab, or carriage return
                 if(data[i] !== " " && data[i] !== '\n' && data[i] !== '\r' && data[i] !== '\t') {
@@ -65,10 +73,10 @@ exports.analyze = function(filename){
                     var lexItem = lexicon.getItem(word);
                     switch (lexItem){
                         case "ASSIGNMENT":
-                            constant = 1;
+                            assignment = 1;
                             break;
                         case "TYPE":
-                            variable = 1;
+                            type = 1;
                             break;
                         case "D_QUOTE":
                             quote = 1;
@@ -76,50 +84,58 @@ exports.analyze = function(filename){
                         case "S_QUOTE":
                             quote = 1;
                             break;
+                        case "L_PAREN":
+                            l_paren = 1;
+                            break;
                     }
+                    if(lexItem == "ID" && /[a-zA-Z]/.test(data[i+1])){
+                        check = 1;
+                    }
+                    if(check == 0){
+                        //writeOut(lexItem + " " + word);
                         writeStream.write(lexItem + " " + word + "\n");
                         word = "";
+                    } else {
+                        check = 0;
+                    }
                 } else {
-                    //Check for Function using lookahead
+                    //Find Functions
                     if (data[i + 1] == "(") {
+                        //writeOut("FUNCTION " + word);
                         writeStream.write("FUNCTION " + word + "\n");
                         word = "";
                     }
                     //Find Variables
-                    if (variable == 1 && data[i + 1] == "=") {
+                    if (type == 1 && (data[i + 1] == "=" || data[i+1] == ";")) {
                         lexicon.setItem(word, "ID");
                         variables.push(word);
+                        //writeOut("ID " + word);
                         writeStream.write("ID " + word + "\n");
-                        variable = 0;
+                        type = 0;
                         word = "";
                     }
                     //Find Constants
-                    if (constant == 1 && data[i + 1] == ";") {
+                    if (type == 0 && /^[a-zA-z0-9]+$/.test(word) && (data[i + 1] == ";" || data[i+1] == ":" || data[i+1] == ")")) {
                         writeStream.write("CONSTANT " + word + "\n");
-                        variable = 0;
+                        assignment = 0;
+                        l_paren = 0;
                         word = "";
                     }
-                    //Case Statements
-                    if (casevar == 1 && data[i + 1] == ":") {
-                        writeStream.write("CONSTANT " + word + "\n");
-                        casevar = 0;
-                        word = "";
-                    }
-                    //Strings
+                    //Find Strings
                     if(quote == 1 && (data[i+1] == "\"" || data[i+1] == "'")){
                         writeStream.write("STRING " + word + "\n");
                         quote = 0;
                         word = "";
                     }
+                    //Find Constant (numbers)
                     if(word.length >= 1 && !isNaN(word) && isNaN(data[i+1])){
-                        //Numbers
                         writeStream.write("CONSTANT " + word + "\n");
                         word = "";
                     }
-                    //Error Check
+                    //Error Check (ignore comments)
                     if (word.length >= 1 && data[i] == " ") {
-                        console.log("Error! Word %s is not in lexicon", word);
-                        word = "";
+                            //console.log("Error! Word %s is not in lexicon", word);
+                            word = "";
                     }
                 }
 
